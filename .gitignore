@@ -43,3 +43,10 @@ FrontEnd/app.*.map.json
 FrontEnd/android/app/debug
 FrontEnd/android/app/profile
 FrontEnd/android/app/release
+
+# Spring Boot / Gradle
+diet-app/build/
+diet-app/.gradle/
+diet-app/out/
+diet-app/src/main/resources/application.properties
+*.log
