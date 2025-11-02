@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:food_recomm/UploadPage.dart';
+import 'package:food_recomm/LoginPage.dart';
 import 'package:intl/date_time_patterns.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:food_recomm/style.dart';
+import 'package:dio/dio.dart';
+import 'package:image_picker/image_picker.dart';
 
 void main() {
   runApp(MaterialApp(
@@ -22,7 +27,7 @@ void main() {
   ));
 }
 
-class MyApp extends StatefulWidget {
+class MyApp extends StatefulWidget { // 메인 함수
   const MyApp({super.key});
   @override
   State<MyApp> createState() => _MyAppState();
@@ -30,8 +35,8 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   var data = [];
   DateTime date = DateTime.now();
-  /// ⬇️ 날짜 선택 함수
-  Future<void> _pickDate() async {
+
+  Future<void> _pickDate() async { // 날짜 선택 함수
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: date,
@@ -49,12 +54,14 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppBar( // 메인페이지 상단
         backgroundColor: Colors.lightGreen,
         title: Text('Prototype'),
         actions: [
           IconButton(onPressed: _pickDate, icon: Icon(Icons.calendar_today)), // 달력 버튼
-          IconButton(onPressed: (){}, icon: Icon(Icons.person)), // 사용자 버튼
+          IconButton(onPressed: (){
+            Navigator.push(context, MaterialPageRoute(builder: (context)=> const LoginPage()),);
+          }, icon: Icon(Icons.person)), // 사용자 버튼
         ],
       ),
       body: Home(date: date),
@@ -62,7 +69,7 @@ class _MyAppState extends State<MyApp> {
   }
 }
 
-class Home extends StatefulWidget {
+class Home extends StatefulWidget { // 메인페이지 중단
   const Home({super.key, this.date});
   final date;
 
@@ -76,7 +83,37 @@ class _HomeState extends State<Home> {
       children: [
         Text(DateFormat('yyyy-MM-dd').format(widget.date), style: TextStyle(fontSize: 30)),
         Container(width: double.infinity, margin: EdgeInsets.symmetric(horizontal: 12), height: 150, padding: EdgeInsets.symmetric(horizontal: 16), decoration: BoxDecoration( borderRadius: BorderRadius.circular(24),),
-        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [Container(height: 300, width: 300, child: ProteinBarChart(todayProtein: 50, goalProtein: 100)),Container(child: Text('[원형그래프]'),)],),),
+        child: Row(mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(height: 300, width: 150, decoration: BoxDecoration(border: Border.all(color: Colors.black, width: 1)),
+              child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                Text('칼로리',style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),),
+                SizedBox(height: 8),
+                Text('1000/2000 kacl',style: TextStyle(fontSize: 16),) // 데이터 받아오는걸로 수정 필요
+              ],),
+            ),
+            SizedBox(width: 10), // 컨테이너 사이 여백
+            Container(height: 300, width: 150, decoration: BoxDecoration(border: Border.all(color: Colors.black, width: 1)),
+              child: Row(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [
+                Column(crossAxisAlignment: CrossAxisAlignment.center, mainAxisAlignment: MainAxisAlignment.center, children: [
+                  Text('탄수화물:', style: TextStyle(fontSize: 15)),
+                  SizedBox(height: 4),
+                  Text('단백질:', style: TextStyle(fontSize: 15)),
+                  SizedBox(height: 4),
+                  Text('지방:', style: TextStyle(fontSize: 15)),
+                ],),
+                Column(crossAxisAlignment: CrossAxisAlignment.center, mainAxisAlignment: MainAxisAlignment.center, children: [SizedBox(width: 5,)],),
+                Column(crossAxisAlignment: CrossAxisAlignment.center, mainAxisAlignment: MainAxisAlignment.center, children: [
+                  Container(child: Text('150/250g', style: TextStyle(fontSize: 15))),
+                  SizedBox(height: 4),
+                  Container(child: Text('150/250g', style: TextStyle(fontSize: 15))),
+                  SizedBox(height: 4),
+                  Container(child: Text('150/250g', style: TextStyle(fontSize: 15))),
+                ],),
+              ],)
+
+            )
+          ],),),
         Text('오늘의 식사', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),),
         MealCard(title: '아침', color: Colors.red), // 아침 카드
         MealCard(title: '점심', color: Colors.lightGreen), // 점심 카드
@@ -99,7 +136,7 @@ class _HomeState extends State<Home> {
 
 
 
-class MealCard extends StatelessWidget {
+class MealCard extends StatelessWidget { // 아침,점심,저녁 카드
   const MealCard({super.key, required this.title, required this.color,});
   final String title;
   final Color color;
@@ -117,9 +154,13 @@ class MealCard extends StatelessWidget {
           children: [
             Text(title, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 16,),),
             Row(children: [
-                IconButton( onPressed: (){showDialog(context: context, builder: (context){return EatData();});}, icon: Icon(Icons.keyboard_arrow_down)),
-                SizedBox(width: 8),
-                IconButton(onPressed: (){EatData();}, icon: Icon(Icons.add_circle, color: Colors.green)),
+              IconButton( onPressed: (){showDialog(context: context, builder: (context){return EatData();});}, icon: Icon(Icons.keyboard_arrow_down)),
+              SizedBox(width: 8),
+              IconButton(onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const UploadPage(userImage: null),),);},// 이미지 없으면 null
+                   icon: const Icon(Icons.add_circle, color: Colors.green),
+              )
               ],),
           ],),
       ),
@@ -127,7 +168,7 @@ class MealCard extends StatelessWidget {
   }
 }
 
-class EatData extends StatelessWidget {
+class EatData extends StatelessWidget { // 카드별 세부정보 보기
   const EatData({super.key});
 
   @override
