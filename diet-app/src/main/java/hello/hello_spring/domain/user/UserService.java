@@ -28,6 +28,10 @@ public class UserService {
         return userRepository.findAll();
     }
 
+    public boolean existsByName(String name) {
+        return userRepository.existsByName(name);
+    }
+
     // 유저 삭제
     public void deleteUser(Long id) {
         userRepository.deleteById(id);

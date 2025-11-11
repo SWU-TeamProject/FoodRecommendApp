@@ -69,8 +69,8 @@ public class DietController {
         return content;
     }
 
-    @PostMapping("/analyze")
-    public String analyzeFood(@RequestBody Map<String, String> request) throws IOException {
+    @PostMapping("/{userId}/analyze")
+    public String analyzeFood(@PathVariable("userId") Long userId, @RequestBody Map<String, String> request) throws IOException {
         String foodItem = request.get("food");
 
         // JSON 예제를 이스케이프 처리
@@ -128,8 +128,8 @@ public class DietController {
     // ==========================
     // 음식 이름으로 영양 분석 + DB 저장
     // ==========================
-    @PostMapping("/breakfast-analyze/{userId}")
-    public String analyzeFood(@PathVariable("userId") Long userId, @RequestBody Map<String, String> request) throws IOException {
+    /*@PostMapping("/breakfast-analyze/{userId}")
+    public String analyzeFood2(@PathVariable("userId") Long userId, @RequestBody Map<String, String> request) throws IOException {
         String foodItem = request.get("food");
 
         // AI에게 영양 분석 요청
@@ -184,7 +184,7 @@ public class DietController {
                 "영양 정보가 저장되었습니다. (칼로리: %.1f kcal, 탄수화물: %.1f g, 단백질: %.1f g, 지방: %.1f g)",
                 kcal, carbs, protein, fat
         );
-    }
+    }*/
 
     // 단위(예: "350 kcal")에서 숫자만 추출하는 유틸 메서드
     private float parseNumber(String str) {

@@ -2,6 +2,9 @@ package hello.hello_spring.domain.dinner;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.time.LocalDate;
+import java.util.List;
+
 public interface DinnerRepository extends JpaRepository<DinnerEntity, Long> {
-    // Additional query methods can be defined here if needed
+    List<DinnerEntity> findByUserIdAndMealDate(Long userId, LocalDate mealDate);
 }
