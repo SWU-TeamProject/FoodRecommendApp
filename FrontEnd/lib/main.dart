@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:food_recomm/UploadPage.dart';
 import 'package:food_recomm/LoginPage.dart';
+import 'package:food_recomm/RecommendDialog.dart';
+import 'package:food_recomm/MyPage.dart';
 import 'package:intl/date_time_patterns.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
@@ -12,6 +14,7 @@ import 'package:image_picker/image_picker.dart';
 
 void main() {
   runApp(MaterialApp(
+    debugShowCheckedModeBanner: false,
     theme: MyTheme,
     home: MyApp(),
     locale: const Locale('ko','KR'), // 한국어 지역, 언어 설정
@@ -84,36 +87,47 @@ class _HomeState extends State<Home> {
         Text(DateFormat('yyyy-MM-dd').format(widget.date), style: TextStyle(fontSize: 30)),
         Container(width: double.infinity, margin: EdgeInsets.symmetric(horizontal: 12), height: 150, padding: EdgeInsets.symmetric(horizontal: 16), decoration: BoxDecoration( borderRadius: BorderRadius.circular(24),),
         child: Row(mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(height: 300, width: 150, decoration: BoxDecoration(border: Border.all(color: Colors.black, width: 1)),
-              child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                Text('칼로리',style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),),
-                SizedBox(height: 8),
-                Text('1000/2000 kacl',style: TextStyle(fontSize: 16),) // 데이터 받아오는걸로 수정 필요
-              ],),
-            ),
-            SizedBox(width: 10), // 컨테이너 사이 여백
-            Container(height: 300, width: 150, decoration: BoxDecoration(border: Border.all(color: Colors.black, width: 1)),
-              child: Row(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [
-                Column(crossAxisAlignment: CrossAxisAlignment.center, mainAxisAlignment: MainAxisAlignment.center, children: [
-                  Text('탄수화물:', style: TextStyle(fontSize: 15)),
-                  SizedBox(height: 4),
-                  Text('단백질:', style: TextStyle(fontSize: 15)),
-                  SizedBox(height: 4),
-                  Text('지방:', style: TextStyle(fontSize: 15)),
-                ],),
-                Column(crossAxisAlignment: CrossAxisAlignment.center, mainAxisAlignment: MainAxisAlignment.center, children: [SizedBox(width: 5,)],),
-                Column(crossAxisAlignment: CrossAxisAlignment.center, mainAxisAlignment: MainAxisAlignment.center, children: [
-                  Container(child: Text('150/250g', style: TextStyle(fontSize: 15))),
-                  SizedBox(height: 4),
-                  Container(child: Text('150/250g', style: TextStyle(fontSize: 15))),
-                  SizedBox(height: 4),
-                  Container(child: Text('150/250g', style: TextStyle(fontSize: 15))),
-                ],),
+          children: [Container(height: 200, width: 150,
+            decoration: BoxDecoration(color: Colors.white54, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.10),offset: const Offset(0, 8),blurRadius: 16,spreadRadius: 0)]),
+            child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+              Text('칼로리',style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),),
+              SizedBox(height: 8),
+              Row(mainAxisAlignment: MainAxisAlignment.center,children: [
+                Text('1000',style: TextStyle(fontSize: 16)), // 데이터 받아오는걸로 수정 필요
+                Text('Kcal',style: TextStyle(fontSize: 16)),
               ],)
-
+            ],),
+          ),
+            SizedBox(width: 10), // 컨테이너 사이 여백
+            Container(height: 200, width: 150,
+                decoration: BoxDecoration( color:Colors.white54,borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.10),offset: const Offset(0, 8),blurRadius: 16,spreadRadius: 0)]),
+                child: Row(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [
+                  Column(crossAxisAlignment: CrossAxisAlignment.center, mainAxisAlignment: MainAxisAlignment.center, children: [
+                    Text('탄수화물:', style: TextStyle(fontSize: 16)),
+                    SizedBox(height: 4),
+                    Text('단백질:', style: TextStyle(fontSize: 16)),
+                    SizedBox(height: 4),
+                    Text('지방:', style: TextStyle(fontSize: 16)),
+                  ],),
+                  Column(crossAxisAlignment: CrossAxisAlignment.center, mainAxisAlignment: MainAxisAlignment.center, children: [SizedBox(width: 5,)],),
+                  Column(crossAxisAlignment: CrossAxisAlignment.center, mainAxisAlignment: MainAxisAlignment.center, children: [
+                    Container(child: Text('250', style: TextStyle(fontSize: 16))), // 데이터 받아오는걸로 수정 필요
+                    SizedBox(height: 4),
+                    Container(child: Text('250', style: TextStyle(fontSize: 16))), // 데이터 받아오는걸로 수정 필요
+                    SizedBox(height: 4),
+                    Container(child: Text('250', style: TextStyle(fontSize: 16))), // 데이터 받아오는걸로 수정 필요
+                  ],),
+                  Column(crossAxisAlignment: CrossAxisAlignment.center, mainAxisAlignment: MainAxisAlignment.center, children: [
+                    Container(child: Text(' g', style: TextStyle(fontSize: 16))),
+                    SizedBox(height: 4),
+                    Container(child: Text(' g', style: TextStyle(fontSize: 16))),
+                    SizedBox(height: 4),
+                    Container(child: Text(' g', style: TextStyle(fontSize: 16))),
+                  ],)
+                ],)
             )
           ],),),
+        SizedBox(height: 8), // 간격
         Text('오늘의 식사', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),),
         MealCard(title: '아침', color: Colors.red), // 아침 카드
         MealCard(title: '점심', color: Colors.lightGreen), // 점심 카드
@@ -122,7 +136,7 @@ class _HomeState extends State<Home> {
           width: double.infinity,
           margin: EdgeInsets.symmetric(horizontal: 12),
           height: 50,
-          child: TextButton(onPressed: (){}, child: Text('AI 식단 추천받기', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),),
+          child: TextButton(onPressed: (){showDialog(context: context, builder: (BuildContext context){return const RecommendDialog();},);}, child: Text('AI 식단 추천받기', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),),
               style: TextButton.styleFrom(
                 foregroundColor: Colors.black,  // 텍스트 색상
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -177,7 +191,7 @@ class EatData extends StatelessWidget { // 카드별 세부정보 보기
       child: Container(width: 300, height: 300,
       child: Column( mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text('Food data'),
+          Text('Food data'), // 요청받아 음식명, 00g 형태로 여러개 받아올 예정. 삭제 기능 추가 필요
           TextButton(onPressed: (){ Navigator.pop(context); }, child: Text('Exit'))
         ],)),
     );}
