@@ -49,13 +49,14 @@ class _LoginPageState extends State<LoginPage> {
         data: {'name': id, 'password': pw},
       );
 
-      if (response.data == '로그인 성공') {
+      if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('로그인 성공!')),
         );
+        final uid = response.data['id'];
          Navigator.pushReplacement(
              context,
-             MaterialPageRoute(builder: (_) => const MyApp()));
+             MaterialPageRoute(builder: (_) => MyApp(uid: uid)));
       } else {
         String msg = '로그인 실패: 알 수 없는 오류';
         final data = response.data;

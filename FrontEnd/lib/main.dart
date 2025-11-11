@@ -68,7 +68,8 @@ class _StartGateState extends State<StartGate> {
       print('[AUTH] call /api/user/login');
       if (response.statusCode == 200) {
         print(200);
-        _moveToMain();
+        final uid = response.data['id'];
+        _moveToMain(uid);
       } else {
         print("err");
         _moveToLogin();
@@ -79,10 +80,10 @@ class _StartGateState extends State<StartGate> {
     }
   }
 
-  void _moveToMain() {
+  void _moveToMain(uid) {
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => const MyApp()),
+      MaterialPageRoute(builder: (_) => MyApp(uid: uid,)),
     );
   }
   void _moveToLogin() {
