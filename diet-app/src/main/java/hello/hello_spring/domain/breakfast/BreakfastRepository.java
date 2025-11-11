@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface BreakfastRepository extends JpaRepository<BreakfastEntity, Long> {
     List<BreakfastEntity> findByUserIdAndMealDate(Long userId, LocalDate mealDate);
+    void deleteByUserIdAndMealDate(Long userId, LocalDate mealDate);
 }

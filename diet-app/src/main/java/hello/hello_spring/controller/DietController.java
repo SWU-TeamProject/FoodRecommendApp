@@ -21,6 +21,7 @@ import hello.hello_spring.domain.dinner.DinnerEntity;
 import hello.hello_spring.domain.dinner.DinnerRepository;
 import hello.hello_spring.domain.nutrition.NutritionEntity;
 import hello.hello_spring.domain.nutrition.NutritionService;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.util.Map;
@@ -112,8 +113,8 @@ public class DietController {
     @Autowired
     private GoogleVisionClient googleVisionClient;
 
-    @PostMapping("/analyze-image")
-    public String analyzeImage(@RequestParam("file") MultipartFile file) throws IOException {
+    @PostMapping("/{userId}/analyze-image")
+    public String analyzeImage(@PathVariable("userId") Long userId, @RequestParam("file") MultipartFile file) throws IOException {
         // 업로드된 파일을 임시 디렉토리에 저장
         File tempFile = File.createTempFile("upload-", file.getOriginalFilename());
         file.transferTo(tempFile);
@@ -215,7 +216,7 @@ public class DietController {
      * 이미지 분석 후 예측된 음식을 breakfast 테이블에 저장
      */
     @PostMapping("/breakfast-analyze-image/{userId}")
-    public String analyzeImage(
+    public String analyzeImage2(
             @PathVariable("userId") Long userId,
             @RequestParam("file") MultipartFile file
     ) throws IOException {
@@ -351,5 +352,33 @@ public class DietController {
         return "음식과 영양 정보가 저장되었습니다.";
     }
 
+    @DeleteMapping("/{userId}/delfood")
+    @Transactional
+    public String deleteFoodByTimeAndDate(
+            @PathVariable("userId") Long userId,
+            @RequestParam("date") String date,
+            @RequestParam("time") String time
+    ) {
+        LocalDate targetDate = LocalDate.parse(date);
+
+        switch (time.toLowerCase()) {
+            case "breakfast":
+                breakfastRepository.deleteByUserIdAndMealDate(userId, targetDate);
+                break;
+
+            case "lunch":
+                lunchRepository.deleteByUserIdAndMealDate(userId, targetDate);
+                break;
+
+            case "dinner":
+                dinnerRepository.deleteByUserIdAndMealDate(userId, targetDate);
+                break;
+
+            default:
+                throw new IllegalArgumentException("Invalid time parameter: " + time);
+        }
+
+        return "해당 날짜의 " + time + " 데이터가 삭제되었습니다.";
+    }
 }
 
