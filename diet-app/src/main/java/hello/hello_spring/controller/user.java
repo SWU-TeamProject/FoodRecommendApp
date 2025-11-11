@@ -33,7 +33,7 @@ public class user {
     @PostMapping("/login")
     public String login(@RequestBody UserEntity user) {
         boolean success = userService.login(user.getName(), user.getPassword());
-        return success ? "로그인 성공" : "로그인 실패: 이름 또는 비밀번호가 일치하지 않습니다.";
+        return success ? "로그인 성공" : "로그인 실패";
     }
 
 

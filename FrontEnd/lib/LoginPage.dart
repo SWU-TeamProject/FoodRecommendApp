@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 import 'package:food_recomm/SignUpPage.dart';
+import 'package:food_recomm/MainPage.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -9,9 +11,10 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  // ✅ 이메일 대신 ID 사용
   final TextEditingController _idController = TextEditingController();
   final TextEditingController _pwController = TextEditingController();
+
+  static const String _loginEndpoint = 'http://localhost:8080/api/user/login';
 
   @override
   void dispose() {
@@ -20,9 +23,9 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  void _login() {
-    String id = _idController.text.trim();
-    String pw = _pwController.text.trim();
+  Future<void> _login() async {
+    final id = _idController.text.trim();
+    final pw = _pwController.text.trim();
 
     if (id.isEmpty || pw.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -31,16 +34,57 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
-    // TODO: 로그인 로직 (스프링 서버 연결 등)
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('로그인 시도 중... (ID: $id)')),
+    final dio = Dio(
+      BaseOptions(
+        headers: {'Content-Type': 'application/json; charset=utf-8'},
+        connectTimeout: const Duration(seconds: 10),
+        receiveTimeout: const Duration(seconds: 15),
+        validateStatus: (s) => s != null && s < 500,
+      ),
     );
-  }
+
+    try {
+      final response = await dio.post(
+        _loginEndpoint,
+        data: {'name': id, 'password': pw},
+      );
+
+      if (response.data == '로그인 성공') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('로그인 성공!')),
+        );
+         Navigator.pushReplacement(
+             context,
+             MaterialPageRoute(builder: (_) => const MyApp()));
+      } else {
+        String msg = '로그인 실패: 알 수 없는 오류';
+        final data = response.data;
+        if (data is Map && data['message'] is String) {
+          msg = '로그인 실패: ${data['message']}';
+        } else if (response.statusCode != null) {
+          msg = '아이디 혹은 비밀번호 오류';
+        }
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+      }
+    } on DioException catch (e) {
+      String msg = '네트워크 오류';
+      if (e.response != null) {
+        msg = '서버 응답 오류: ${e.response?.statusCode}';
+      } else if (e.type == DioExceptionType.connectionTimeout) {
+        msg = '연결 시간 초과';
+      } else if (e.type == DioExceptionType.receiveTimeout) {
+        msg = '서버 응답 지연';
+      }
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('예상치 못한 오류: $e')));
+    }
+  } // ← _login() 여기서 끝!
 
   void _signup() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const SignUpPage()),
+      MaterialPageRoute(builder: (_) => const SignUpPage()),
     );
   }
 
@@ -56,7 +100,7 @@ class _LoginPageState extends State<LoginPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // ✅ ID 입력 필드
+            // ID 입력
             TextField(
               controller: _idController,
               decoration: const InputDecoration(
@@ -67,7 +111,7 @@ class _LoginPageState extends State<LoginPage> {
             ),
             const SizedBox(height: 16),
 
-            // ✅ 비밀번호 입력 필드
+            // 비밀번호 입력
             TextField(
               controller: _pwController,
               obscureText: true,
@@ -107,4 +151,3 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 }
-

@@ -13,6 +13,7 @@ public class UserService {
     private UserRepository userRepository;
 
     public boolean login(String name, String password) {
+        System.out.println("here");
         Optional<UserEntity> user = userRepository.findByNameAndPassword(name, password);
         return user.isPresent(); // 일치하는 사용자가 있으면 true 반환
     }
