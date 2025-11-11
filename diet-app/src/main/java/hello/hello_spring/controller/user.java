@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.*;
 import hello.hello_spring.domain.breakfast.BreakfastRepository;
 import hello.hello_spring.domain.lunch.LunchRepository;
 import hello.hello_spring.domain.dinner.DinnerRepository;
+import java.util.Map;
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/user")
@@ -55,17 +57,29 @@ public class user {
     }
 
     @PostMapping("/login")
-    public String login(@RequestBody UserEntity user) {
+    public Map<String, Object> login(@RequestBody UserEntity user) {
         boolean success = userService.login(user.getName(), user.getPassword());
-        return success ? "로그인 성공" : "로그인 실패";
+        if (success) {
+            Long userId = userService.findByName(user.getName())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."))
+                    .getId();
+
+            // 성공 메시지와 ID를 포함한 응답 생성
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "로그인 성공");
+            response.put("id", userId);
+
+            return response;
+        } else {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인 실패: 이름 또는 비밀번호가 일치하지 않습니다.");
+        }
     }
 
     @GetMapping("/{userId}/detail")
     public List<String> getFoodByTimeAndDate(
             @PathVariable("userId") Long userId,
             @RequestParam("date") String date,
-            @RequestParam("time") String time
-    ) {
+            @RequestParam("time") String time) {
         LocalDate targetDate = LocalDate.parse(date);
 
         switch (time.toLowerCase()) {
@@ -92,9 +106,11 @@ public class user {
         }
     }
 
-
-    /*@PutMapping("/update/{id}") // 유저 수정
-    public UserEntity updateUser(@PathVariable("id") Long id, @RequestBody UserEntity user) {
-        return userService.updateUser(id, user);
-    }*/
+    /*
+     * @PutMapping("/update/{id}") // 유저 수정
+     * public UserEntity updateUser(@PathVariable("id") Long id, @RequestBody
+     * UserEntity user) {
+     * return userService.updateUser(id, user);
+     * }
+     */
 }

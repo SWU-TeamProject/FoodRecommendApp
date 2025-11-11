@@ -6,4 +6,5 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<UserEntity, Long> {
     Optional<UserEntity> findByNameAndPassword(String name, String password);
     boolean existsByName(String name); // name 중복 확인 메서드 추가
+    Optional<UserEntity> findByName(String name);
 }
