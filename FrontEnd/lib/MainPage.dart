@@ -307,7 +307,7 @@ class _HomeState extends State<Home> {
               showDialog(
                 context: context,
                 builder: (BuildContext context) {
-                  return RecommendDialog(uid: widget.uid);
+                  return RecommendDialog(uid: widget.uid, date: widget.date);
                 },
               );
             },

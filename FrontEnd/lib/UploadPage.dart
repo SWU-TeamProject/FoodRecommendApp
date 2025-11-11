@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
+import 'package:path/path.dart' as p;
 
 class UploadPage extends StatefulWidget {
   const UploadPage({
@@ -74,8 +75,16 @@ class _UploadPageState extends State<UploadPage> {
     }
 
     final dio = Dio();
+
+    dio.interceptors.add(LogInterceptor(
+      request: true, requestBody: true, requestHeader: true,
+      responseHeader: true, responseBody: true,
+    ));
+
     try {
       // form-data: file 파트만 전송
+      final path = _previewImage!.path;
+      final filename = p.basename(path);
       final formData = FormData.fromMap({
         'file': await MultipartFile.fromFile(
           _previewImage!.path,
@@ -85,22 +94,19 @@ class _UploadPageState extends State<UploadPage> {
 
       // 주소: /api/{uid}/  (예: http://localhost:8080/api/123/)
       final response = await dio.post(
-        'http://localhost:8080/api/${widget.uid}/',
+        'http://localhost:8080/api/diet/${widget.uid}/analyze-image',
         data: formData,
-        options: Options(headers: {'Content-Type': 'multipart/form-data'}),
+        options: Options(validateStatus: (s)=> true),
       );
 
       // 성공 시: 서버 응답에서 음식명 추출 → 입력칸에 채움
       if (response.statusCode == 200) {
-        final data = response.data;
-        // key 이름이 foodName이든 name이든 대응 (없으면 빈 문자열)
-        final dynamicName = (data is Map) ? (data['foodName'] ?? data['name'] ?? data['food'] ?? '') : '';
-        final name = (dynamicName is String) ? dynamicName : dynamicName?.toString() ?? '';
+        final body = response.data?.toString() ?? '';
+        // "예측 음식: " 접두사 제거
+        final parsed = body.replaceFirst(RegExp(r'^예측 음식:\s*'), '').trim();
 
-        if (name.isNotEmpty) {
-          setState(() {
-            _foodNameCtrl.text = name;
-          });
+        if (parsed.isNotEmpty && parsed != '음식을 추정할 수 없습니다.') {
+          setState(() => _foodNameCtrl.text = parsed);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('음식명이 자동 입력되었습니다.')),
           );
@@ -111,12 +117,16 @@ class _UploadPageState extends State<UploadPage> {
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('분석 실패: ${response.statusCode}')),
+          SnackBar(content: Text('분석 실패: ${response.statusCode} / ${response.data}')),
         );
       }
+    } on DioException catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('네트워크/요청 오류: ${e.message}')),
+      );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('분석 중 오류가 발생했습니다: $e')),
+        SnackBar(content: Text('예상치 못한 오류: $e')),
       );
     }
   }
