@@ -1,0 +1,87 @@
+# =====================================================
+# 🧩 General / System
+# =====================================================
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# =====================================================
+# 💡 IDE / Editor
+# =====================================================
+# IntelliJ / Android Studio
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# VS Code
+.vscode/
+.vscode-test/
+
+# =====================================================
+# 🐦 Flutter / Dart
+# =====================================================
+FrontEnd/**/doc/api/
+FrontEnd/**/ios/Flutter/.last_build_id
+FrontEnd/.dart_tool/
+FrontEnd/.flutter-plugins
+FrontEnd/.flutter-plugins-dependencies
+FrontEnd/.pub-cache/
+FrontEnd/.pub/
+FrontEnd/build/
+FrontEnd/coverage/
+FrontEnd/generated_plugin_registrant.dart
+FrontEnd/ios/Pods/
+FrontEnd/macos/Pods/
+FrontEnd/windows/flutter/ephemeral/
+FrontEnd/linux/flutter/ephemeral/
+FrontEnd/web/.dart_tool/
+FrontEnd/android/local.properties  # 중요! SDK 경로 포함됨
+
+# Symbolication related
+FrontEnd/app.*.symbols
+
+# Obfuscation related
+FrontEnd/app.*.map.json
+
+# Android Studio build outputs
+FrontEnd/android/app/debug
+FrontEnd/android/app/profile
+FrontEnd/android/app/release
+
+# Firebase / Secret keys
+FrontEnd/lib/firebase_options.dart
+
+# =====================================================
+# ☕ Spring Boot / Gradle
+# =====================================================
+diet-app/build/
+diet-app/.gradle/
+diet-app/out/
+diet-app/target/
+diet-app/bin/
+diet-app/src/main/resources/application.properties
+diet-app/src/main/resources/application.yml
+*.log
+
+# =====================================================
+# 🧪 Misc / Optional
+# =====================================================
+# OS files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Node-related (if using web or JS dependencies)
+FrontEnd/node_modules/
+package-lock.json
+yarn.lock
