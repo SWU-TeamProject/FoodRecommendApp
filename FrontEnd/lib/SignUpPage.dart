@@ -183,8 +183,8 @@ class _SignUpPageState extends State<SignUpPage> {
                     value: _gender,
                     hint: const Text('선택'),
                     items: const [
-                      DropdownMenuItem(value: 'M', child: Text('남')),
-                      DropdownMenuItem(value: 'F', child: Text('여')),
+                      DropdownMenuItem(value: 'male', child: Text('남')),
+                      DropdownMenuItem(value: 'female', child: Text('여')),
                     ],
                     onChanged: (v) => setState(() => _gender = v),
                   ),
