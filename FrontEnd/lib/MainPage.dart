@@ -60,10 +60,10 @@ class _MyAppState extends State<MyApp> {
 
       print(res.data);
       final data = res.data as Map<String, dynamic>;
-      final newCalorie = data['kacl']?.toDouble();
-      final newCarb = data['carbohydrate']?.toDouble();
-      final newProtein = data['protein']?.toDouble();
-      final newFat = data['fat']?.toDouble();
+      final newCalorie = data['totalCalories']?.toDouble();
+      final newCarb = data['totalCarbs']?.toDouble();
+      final newProtein = data['totalProtein']?.toDouble();
+      final newFat = data['totalFat']?.toDouble();
       setState(() {
         calorie = newCalorie;
         carbohydrate = newCarb;
@@ -159,7 +159,7 @@ class Home extends StatefulWidget { // 메인페이지 중단
 }
 
 class _HomeState extends State<Home> {
-  String _fmtNum(double? v, {int decimals = 0}) {
+  String _fmtNum(double? v, {int decimals = 2}) {
     if (v == null) return '--';
     final fixed = v.toStringAsFixed(decimals);
     return fixed;
@@ -223,7 +223,7 @@ class _HomeState extends State<Home> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(_fmtNum(widget.calorie, decimals: 0), style: const TextStyle(fontSize: 16)),
+                        Text(_fmtNum(widget.calorie, decimals: 2), style: const TextStyle(fontSize: 16)),
                         const Text(' Kcal', style: TextStyle(fontSize: 16)),
                       ],
                     )
@@ -268,11 +268,11 @@ class _HomeState extends State<Home> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(_fmtNum(widget.carbohydrate, decimals: 0), style: const TextStyle(fontSize: 16)),
+                        Text(_fmtNum(widget.carbohydrate, decimals: 2), style: const TextStyle(fontSize: 16)),
                         const SizedBox(height: 4),
-                        Text(_fmtNum(widget.protein, decimals: 0), style: const TextStyle(fontSize: 16)),
+                        Text(_fmtNum(widget.protein, decimals: 2), style: const TextStyle(fontSize: 16)),
                         const SizedBox(height: 4),
-                        Text(_fmtNum(widget.fat, decimals: 0), style: const TextStyle(fontSize: 16)),
+                        Text(_fmtNum(widget.fat, decimals: 2), style: const TextStyle(fontSize: 16)),
                       ],
                     ),
                     Column(
@@ -294,9 +294,9 @@ class _HomeState extends State<Home> {
         ),
         const SizedBox(height: 8), // 간격
         const Text('오늘의 식사', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-        MealCard(title: '아침', color: Colors.red, uid: widget.uid), // 아침 카드
-        MealCard(title: '점심', color: Colors.lightGreen, uid: widget.uid), // 점심 카드
-        MealCard(title: '저녁', color: Colors.lightBlue, uid: widget.uid), // 저녁 카드
+        MealCard(title: '아침', color: Colors.red, uid: widget.uid, time: 'breakfast', date: widget.date), // 아침 카드
+        MealCard(title: '점심', color: Colors.lightGreen, uid: widget.uid, time: 'lunch', date: widget.date), // 점심 카드
+        MealCard(title: '저녁', color: Colors.lightBlue, uid: widget.uid, time: 'dinner', date: widget.date), // 저녁 카드
         Container(
           decoration: BoxDecoration(color: Colors.green, borderRadius: BorderRadius.circular(20)), // 식단 추천 버튼
           width: double.infinity,
@@ -325,10 +325,13 @@ class _HomeState extends State<Home> {
 }
 
 class MealCard extends StatelessWidget { // 아침,점심,저녁 카드
-  const MealCard({super.key, required this.title, required this.color, this.uid});
+  const MealCard({super.key, required this.title, required this.color, this.uid, this.time, this.date});
   final String title;
   final Color color;
   final int? uid;
+  final String? time;
+  final DateTime? date;
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -346,7 +349,7 @@ class MealCard extends StatelessWidget { // 아침,점심,저녁 카드
               children: [
                 IconButton(
                   onPressed: () {
-                    showDialog(context: context, builder: (context) => EatData(uid: uid));
+                    showDialog(context: context, builder: (context) => EatData(uid: uid, time: time, date: date));
                   },
                   icon: const Icon(Icons.keyboard_arrow_down),
                 ),
@@ -354,7 +357,7 @@ class MealCard extends StatelessWidget { // 아침,점심,저녁 카드
                 IconButton(
                   onPressed: () {
                     Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => UploadPage(uid: uid, userImage: null)),
+                      MaterialPageRoute(builder: (_) => UploadPage(uid: uid, userImage: null, time: time, date: date)),
                     );
                   }, // 이미지 없으면 null
                   icon: const Icon(Icons.add_circle, color: Colors.green),
@@ -368,21 +371,173 @@ class MealCard extends StatelessWidget { // 아침,점심,저녁 카드
   }
 }
 
-class EatData extends StatelessWidget { // 카드별 세부정보 보기
-  const EatData({super.key, this.uid});
+class EatData extends StatefulWidget { // 카드별 세부정보 보기
+  const EatData({super.key, this.uid, this.time, this.date});
   final int? uid;
+  final String? time;
+  final DateTime? date;
+
+  @override
+  State<EatData> createState() => _EatDataState();
+}
+
+class _EatDataState extends State<EatData> {
+  late Future<List<String>> _futureFoods;
+
+  @override
+  void initState() {
+    super.initState();
+    _futureFoods = _fetchDetail();
+  }
+
+  // 세부정보 연결
+  Future<List<String>> _fetchDetail() async {
+    if (widget.uid == null || widget.date == null || (widget.time?.isEmpty ?? true)) {
+      throw Exception('필수 파라미터(uid/date/time)가 없습니다.');
+    }
+
+    final dateStr = DateFormat('yyyy-MM-dd').format(widget.date!);
+
+    final uri = Uri.parse(
+      'http://localhost:8080/api/user/${widget.uid}/detail',
+    ).replace(queryParameters: {
+      'date': dateStr,
+      'time': widget.time!,
+    });
+
+    final dio = Dio();
+    final resp = await dio.getUri(uri);
+
+    // 서버가 주는 "문자열 묶음" 케이스별 처리
+    final data = resp.data;
+    if (data == null) return [];
+
+    if (data is List) {
+      // ex) ["김치찌개 200g","밥 150g"]
+      return data.map((e) => e.toString()).toList();
+    } else if (data is String) {
+      // ex) "김치찌개 200g, 밥 150g" or "김치찌개 200g\n밥 150g"
+      final s = data.trim();
+      if (s.contains('\n')) {
+        return s.split('\n').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+      }
+      if (s.contains(',')) {
+        return s.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+      }
+      // 단일 항목 문자열
+      return s.isEmpty ? [] : [s];
+    } else {
+      // Map이나 기타 포맷인 경우 문자열로 바꿔 단일 항목으로 표시
+      return [data.toString()];
+    }
+  }
+
+  // 삭제 연결
+  Future<void> _deleteAll() async {
+    if (widget.uid == null || widget.date == null || (widget.time?.isEmpty ?? true)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('uid/date/time이 없습니다.')),
+      );
+      return;
+    }
+
+    final dateStr = DateFormat('yyyy-MM-dd').format(widget.date!);
+    final uri = Uri.parse(
+      'http://localhost:8080/api/diet/${widget.uid}/delfood',
+    ).replace(queryParameters: {
+      'date': dateStr,
+      'time': widget.time!,
+    });
+
+    try {
+      final dio = Dio();
+      await dio.deleteUri(uri);
+
+      if (!mounted) return;
+      // 목록 비우기
+      setState(() {
+        _futureFoods = Future.value(<String>[]);
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('음식 목록이 삭제되었습니다.')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('삭제 실패: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Dialog(
       child: SizedBox(
-        width: 300,
-        height: 300,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text('Food data'), // 요청받아 음식명, 00g 형태로 여러개 받아올 예정. 삭제 기능 추가 필요
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Exit')),
-          ],
+        width: 320,
+        height: 360,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              const Text(
+                'Food data',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: FutureBuilder<List<String>>(
+                  future: _futureFoods,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Text(
+                          '불러오기 실패: ${snapshot.error}',
+                          textAlign: TextAlign.center,
+                        ),
+                      );
+                    }
+                    final items = snapshot.data ?? [];
+                    if (items.isEmpty) {
+                      return const Center(child: Text('표시할 데이터가 없습니다.'));
+                    }
+                    return ListView.separated(
+                      itemCount: items.length,
+                      separatorBuilder: (_, __) => const Divider(height: 12),
+                      itemBuilder: (context, i) {
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(Icons.restaurant_menu, size: 18),
+                            const SizedBox(width: 8),
+                            Expanded(child: Text(items[i])),
+                          ],
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: _deleteAll,
+                    child: const Text('음식삭제'),
+                  ),
+                  const SizedBox(width: 8),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Exit'),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
