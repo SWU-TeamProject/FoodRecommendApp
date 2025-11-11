@@ -34,19 +34,27 @@ public class DietController {
     @Autowired
     private OpenAIClient openAIClient;
 
-    @PostMapping("/recommend")
-    public String recommendDiet(@RequestBody Map<String, Object> nutrition) throws IOException {
-        int calories = (int) nutrition.get("calories");
-        int carbs = (int) nutrition.get("carbohydrates");
-        int protein = (int) nutrition.get("protein");
-        int fat = (int) nutrition.get("fat");
+    @PostMapping("/{userId}/recommend")
+    public String recommendDiet(@PathVariable("userId") Long userId,
+                                @RequestParam("date") String date) throws IOException {
+        LocalDate targetDate = LocalDate.parse(date);
 
+        // nutrition 테이블에서 userId와 date로 데이터 검색
+        List<NutritionEntity> nutritionList = nutritionRepository.findByUserIdAndNutritionDate(userId, targetDate);
+
+        // 각 속성 합산
+        float totalCalories = (float) nutritionList.stream().mapToDouble(NutritionEntity::getKcal).sum();
+        float totalCarbs = (float) nutritionList.stream().mapToDouble(NutritionEntity::getCarbohydrate).sum();
+        float totalProtein = (float) nutritionList.stream().mapToDouble(NutritionEntity::getProtein).sum();
+        float totalFat = (float) nutritionList.stream().mapToDouble(NutritionEntity::getFat).sum();
+
+        // OpenAI API에 전달할 프롬프트 생성
         String prompt = String.format(
                 "다음은 어떤 사람이 하루 동안 섭취한 영양소입니다:\n" +
-                        "- 칼로리: %d kcal\n" +
-                        "- 탄수화물: %d g\n" +
-                        "- 단백질: %d g\n" +
-                        "- 지방: %d g\n\n" +
+                        "- 칼로리: %.1f kcal\n" +
+                        "- 탄수화물: %.1f g\n" +
+                        "- 단백질: %.1f g\n" +
+                        "- 지방: %.1f g\n\n" +
                         "이 사람의 하루 영양 섭취를 간단히 분석한 후, 부족하거나 과잉된 부분을 고려해 다음 식사(예: 점심 또는 저녁)에서 어떻게 보완해야 할지 간단히 설명한 문장을 먼저 작성해주세요.\n" +
                         "\n" +
                         "그 다음, 아래와 같은 형식으로 추천 식단을 최대 3개까지만(1,2개만 제시해도 됩니다.) 제시해주세요. 반드시 아래 포맷을 그대로 따르세요:\n" +
@@ -56,15 +64,15 @@ public class DietController {
                         "- **설명**: (간단한 설명. 예: 이 식단은 단백질과 건강한 지방이 풍부하여 부족한 영양을 보충해줍니다.)\n" +
                         "\n" +
                         "※ 주의: 이모지, 마크다운, 번호, 다른 형식 등을 사용하지 말고 위 포맷을 정확히 따르세요.",
-                calories, carbs, protein, fat
+                totalCalories, totalCarbs, totalProtein, totalFat
         );
 
+        // OpenAI API 호출
         String response = openAIClient.getDietRecommendation(prompt);
 
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode root = objectMapper.readTree(response);
         String content = root.path("choices").get(0).path("message").path("content").asText();
-
 
         return content;
     }
@@ -128,7 +136,7 @@ public class DietController {
     // ==========================
     // 음식 이름으로 영양 분석 + DB 저장
     // ==========================
-    /*@PostMapping("/breakfast-analyze/{userId}")
+    @PostMapping("/breakfast-analyze/{userId}")
     public String analyzeFood2(@PathVariable("userId") Long userId, @RequestBody Map<String, String> request) throws IOException {
         String foodItem = request.get("food");
 
@@ -184,7 +192,7 @@ public class DietController {
                 "영양 정보가 저장되었습니다. (칼로리: %.1f kcal, 탄수화물: %.1f g, 단백질: %.1f g, 지방: %.1f g)",
                 kcal, carbs, protein, fat
         );
-    }*/
+    }
 
     // 단위(예: "350 kcal")에서 숫자만 추출하는 유틸 메서드
     private float parseNumber(String str) {
