@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:food_recomm/UploadPage.dart';
 import 'package:food_recomm/LoginPage.dart';
 import 'package:food_recomm/RecommendDialog.dart';
+import 'package:food_recomm/MyPage.dart';
 import 'package:intl/date_time_patterns.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';

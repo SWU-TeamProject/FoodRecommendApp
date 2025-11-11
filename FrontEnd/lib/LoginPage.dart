@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:food_recomm/SignUpPage.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -37,9 +38,9 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _signup() {
-    // TODO: 회원가입 페이지 이동 로직
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('회원가입 페이지로 이동합니다.')),
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const SignUpPage()),
     );
   }
 
