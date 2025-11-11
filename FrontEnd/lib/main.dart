@@ -11,23 +11,88 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:food_recomm/style.dart';
 import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-void main() {
-  runApp(MaterialApp(
-    debugShowCheckedModeBanner: false,
-    theme: MyTheme,
-    home: MyApp(),
-    locale: const Locale('ko','KR'), // 한국어 지역, 언어 설정
-    supportedLocales: const [ // 한국어, 영어 지원
-      Locale('en', 'US'),
-      Locale('ko', 'KR'),
-    ],
-    localizationsDelegates: const [ // 위젯 번역
-      GlobalMaterialLocalizations.delegate,
-      GlobalWidgetsLocalizations.delegate,
-      GlobalCupertinoLocalizations.delegate,
-    ],
-  ));
+void main() {runApp(const StartGate());}
+
+class StartGate extends StatefulWidget {
+  const StartGate({super.key});
+
+  @override
+  State<StartGate> createState() => _StartGateState();
+}
+
+class _StartGateState extends State<StartGate> {
+  //final storage = const FlutterSecureStorage();
+  final test_id = "aaa";
+  final test_pw = "1234";
+  @override
+  void initState() {
+    super.initState();
+    _checkLoginStatus();
+  }
+
+  Future<void> _checkLoginStatus() async {
+    //final id = await storage.read(key: 'id');
+    //final pw = await storage.read(key: 'pw');
+    final id = test_id;
+    final pw = test_pw;
+
+    if (id == null || pw == null) {
+      _moveToLogin();
+      return;
+    }
+    try {
+      final dio = Dio();
+      final response = await dio.post(
+        'http://<서버주소>/login', // ⚠️ 실제 API 주소로 수정 필요
+        data: {'name': id, 'password': pw},
+      );
+      if (response.statusCode == 200) {
+        _moveToMain();
+      } else {
+        _moveToLogin();
+      }
+    } catch (e) {
+      _moveToLogin();
+    }
+  }
+
+  void _moveToMain() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const MyApp()),
+    );
+  }
+  void _moveToLogin() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginPage()),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: MyTheme,
+      locale: const Locale('ko', 'KR'),
+      supportedLocales: const [
+        Locale('en', 'US'),
+        Locale('ko', 'KR'),
+      ],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      home: const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      ),
+    );
+  }
 }
 
 class MyApp extends StatefulWidget { // 메인 함수
