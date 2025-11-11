@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 class RecommendDialog extends StatelessWidget {
-  const RecommendDialog({super.key});
+  const RecommendDialog({super.key, this.uid});
+  final int? uid;
 
   @override
   Widget build(BuildContext context) {

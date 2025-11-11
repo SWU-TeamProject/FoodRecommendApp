@@ -45,7 +45,6 @@ class _MyAppState extends State<MyApp> {
       });
       return;
     }
-
     setState(() {
       _loading = true;
       _error = null;
@@ -53,20 +52,18 @@ class _MyAppState extends State<MyApp> {
 
     final dio = Dio();
     final String ymd = DateFormat('yyyy-MM-dd').format(date);
-
     try {
       final res = await dio.get(
-        '$_baseUrl/api/${widget.uid}/summary',
+        '$_baseUrl/api/diet/${widget.uid}/summary',
         queryParameters: {'date': ymd},
       );
 
+      print(res.data);
       final data = res.data as Map<String, dynamic>;
-
       final newCalorie = data['kacl']?.toDouble();
       final newCarb = data['carbohydrate']?.toDouble();
       final newProtein = data['protein']?.toDouble();
       final newFat = data['fat']?.toDouble();
-
       setState(() {
         calorie = newCalorie;
         carbohydrate = newCarb;
@@ -115,13 +112,14 @@ class _MyAppState extends State<MyApp> {
           IconButton(onPressed: _pickDate, icon: const Icon(Icons.calendar_today)), // 달력 버튼
           IconButton(
             onPressed: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const MyPage()));
+              Navigator.push(context, MaterialPageRoute(builder: (context) => MyPage(uid: widget.uid)));
             },
             icon: const Icon(Icons.person),
           ), // 사용자 버튼
         ],
       ),
       body: Home(
+        uid: widget.uid,
         date: date,
         loading: _loading,
         error: _error,
@@ -137,6 +135,7 @@ class _MyAppState extends State<MyApp> {
 class Home extends StatefulWidget { // 메인페이지 중단
   const Home({
     super.key,
+    this.uid,
     this.date,
     this.loading = false,
     this.error,
@@ -146,10 +145,10 @@ class Home extends StatefulWidget { // 메인페이지 중단
     this.fat,
   });
 
+  final int? uid;
   final DateTime? date;
   final bool loading;
   final String? error;
-
   final double? calorie;
   final double? carbohydrate;
   final double? protein;
@@ -295,9 +294,9 @@ class _HomeState extends State<Home> {
         ),
         const SizedBox(height: 8), // 간격
         const Text('오늘의 식사', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-        const MealCard(title: '아침', color: Colors.red), // 아침 카드
-        const MealCard(title: '점심', color: Colors.lightGreen), // 점심 카드
-        const MealCard(title: '저녁', color: Colors.lightBlue), // 저녁 카드
+        MealCard(title: '아침', color: Colors.red, uid: widget.uid), // 아침 카드
+        MealCard(title: '점심', color: Colors.lightGreen, uid: widget.uid), // 점심 카드
+        MealCard(title: '저녁', color: Colors.lightBlue, uid: widget.uid), // 저녁 카드
         Container(
           decoration: BoxDecoration(color: Colors.green, borderRadius: BorderRadius.circular(20)), // 식단 추천 버튼
           width: double.infinity,
@@ -308,7 +307,7 @@ class _HomeState extends State<Home> {
               showDialog(
                 context: context,
                 builder: (BuildContext context) {
-                  return const RecommendDialog();
+                  return RecommendDialog(uid: widget.uid);
                 },
               );
             },
@@ -326,9 +325,10 @@ class _HomeState extends State<Home> {
 }
 
 class MealCard extends StatelessWidget { // 아침,점심,저녁 카드
-  const MealCard({super.key, required this.title, required this.color});
+  const MealCard({super.key, required this.title, required this.color, this.uid});
   final String title;
   final Color color;
+  final int? uid;
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -346,7 +346,7 @@ class MealCard extends StatelessWidget { // 아침,점심,저녁 카드
               children: [
                 IconButton(
                   onPressed: () {
-                    showDialog(context: context, builder: (context) => const EatData());
+                    showDialog(context: context, builder: (context) => EatData(uid: uid));
                   },
                   icon: const Icon(Icons.keyboard_arrow_down),
                 ),
@@ -354,7 +354,7 @@ class MealCard extends StatelessWidget { // 아침,점심,저녁 카드
                 IconButton(
                   onPressed: () {
                     Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const UploadPage(userImage: null)),
+                      MaterialPageRoute(builder: (_) => UploadPage(uid: uid, userImage: null)),
                     );
                   }, // 이미지 없으면 null
                   icon: const Icon(Icons.add_circle, color: Colors.green),
@@ -369,8 +369,8 @@ class MealCard extends StatelessWidget { // 아침,점심,저녁 카드
 }
 
 class EatData extends StatelessWidget { // 카드별 세부정보 보기
-  const EatData({super.key});
-
+  const EatData({super.key, this.uid});
+  final int? uid;
   @override
   Widget build(BuildContext context) {
     return Dialog(

@@ -3,7 +3,8 @@ import 'package:flutter/services.dart';
 // import 'style.dart'; // 프로젝트 공통 스타일을 쓰면 여기를 활성화하세요.
 
 class MyPage extends StatefulWidget {
-  const MyPage({super.key});
+  const MyPage({super.key, this.uid});
+  final int? uid;
 
   @override
   State<MyPage> createState() => _MyPageState();
